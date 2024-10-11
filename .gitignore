@@ -2,6 +2,7 @@
 data/
 env.
 SessionName.session*
+!data/telegram/first.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
