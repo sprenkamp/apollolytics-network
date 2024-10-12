@@ -1,0 +1,6 @@
+users:
+  - guillaume-account:
+    x-user-name: guillaume_dino
+    x-password: Dino_lab_2024!
+    email-address: guillaume.dino@protonmail.com
+    email-password: Dino_Lab_2024!
