@@ -4,6 +4,7 @@ import os
 import argparse
 from dotenv import load_dotenv
 from telethon import TelegramClient
+from telethon import types
 from tqdm import tqdm 
 import datetime
 from multiprocessing import Manager
@@ -18,16 +19,62 @@ async def scrape_chat(chat, client, highest_date, result_list):
 
     max_time = highest_date  # Set max_time to the highest_date
     data_list = []
-
     async for message in client.iter_messages(chat, reverse=True, offset_date=max_time):
 
-        if message.message is not None and message.message != '':
+        if message.message is not None and message.message != '' and message.message != 'Невозможно подключиться к серверу. Проверьте соединение и повторите попытку.':
             record = dict()
+
             record['chat'] = chat
 
+            record['id'] = message.id
+            record['peer_id'] = message.peer_id.channel_id
             record['messageDatetime'] = message.date
             record['messageDate'] = message.date.strftime("%Y-%m-%d")
             record['messageText'] = message.message
+
+            record['out'] = message.out
+            record['mentioned'] = message.mentioned
+            record['media_unread'] = message.media_unread
+            record['silent'] = message.silent
+            record['post'] = message.post
+            record['from_scheduled'] = message.from_scheduled
+            record['legacy'] = message.legacy
+            record['edit_hide'] = message.edit_hide
+            record['pinned'] = message.pinned
+            record['noforwards'] = message.noforwards
+            record['invert_media'] = message.invert_media
+            record['offline'] = message.offline
+            record['from_id'] = message.from_id
+            record['from_boosts_applied'] = message.from_boosts_applied
+            record['saved_peer_id'] = message.saved_peer_id
+            
+            fwd_from = None
+            fwd_type = None
+            if message.fwd_from is not None:
+                if type(message.fwd_from.from_id) == types.PeerUser and message.fwd_from.from_id is not None:
+                    fwd_from = message.fwd_from.from_id.user_id
+                    fwd_type = 'user'
+                elif message.fwd_from.from_id is not None:
+                    fwd_from = message.fwd_from.from_id.channel_id
+                    fwd_type = 'channel'
+
+            record['fwd_from'] = fwd_from # only save channel ID of origin (is it even a channel or just the user?)
+            record['fwd_from_type'] = fwd_type
+
+            record['via_bot_id'] = message.via_bot_id
+            record['via_business_bot_id'] = message.via_business_bot_id
+            record['reply_to'] = message.reply_to
+            # record['media'] = message.media #too many nested values related to images
+            record['reply_markup'] = message.reply_markup
+            record['entities'] = message.entities
+            record['edit_date'] = message.edit_date
+            record['post_author'] = message.post_author
+            record['grouped_id'] = message.grouped_id
+            record['restriction_reason'] = message.restriction_reason
+            record['ttl_period'] = message.ttl_period
+            record['quick_reply_shortcut_id'] = message.quick_reply_shortcut_id
+            record['effect'] = message.effect
+            record['factcheck'] = message.factcheck
 
             record['views'] = message.views if message.views is not None else 0
             record['forwards'] = message.forwards if message.forwards is not None else 0
@@ -59,6 +106,7 @@ async def callAPI(input_file_path, output_csv_path):
     :input_file_path: .txt file containing the list of chats to scrape, each line should represent one chat
     :output_csv_path: path where the output CSV file will be saved containing the scraped data
     """
+
     TELEGRAM_API_ID = os.getenv("TELEGRAM_API_ID")
     TELEGRAM_API_HASH = os.getenv("TELEGRAM_API_HASH")
 

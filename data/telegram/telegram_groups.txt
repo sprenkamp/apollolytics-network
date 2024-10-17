@@ -1,7 +1,7 @@
 #Russia
-https://t.me/opersvodki
+#https://t.me/opersvodki
 #https://t.me/readovkanews
-https://t.me/sashakots
+#https://t.me/sashakots
 https://t.me/russ_orientalist
 #https://t.me/soldatskayapravda
 ##Z Movement
@@ -23,9 +23,7 @@ https://t.me/taker_russia2024
 https://t.me/swodki
 https://t.me/vysokygovorit
 #https://t.me/s/redakciya_channel
-https://t.me/opersvodki
 https://t.me/readovkanews
-https://t.me/sashakots
 https://t.me/russ_orientalist
 https://t.me/soldatskayapravda
 https://t.me/swodki
@@ -51,7 +49,5 @@ https://t.me/MeetHarkov
 https://t.me/nach_shtabu
 #https://t.me/c/1957426535/1789469
 #Kremlin friendly
-https://t.me/panchenkodi
+#https://t.me/panchenkodi
 https://t.me/Medvedeva_Olesya
-https://t.me/nach_shtabu 
-https://t.me/anna_news
