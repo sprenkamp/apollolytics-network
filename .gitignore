@@ -3,6 +3,8 @@ data/
 env.
 SessionName.session*
 !data/telegram/first.csv
+.DS_Store
+visualization/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
