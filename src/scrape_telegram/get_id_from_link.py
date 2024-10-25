@@ -3,14 +3,15 @@ from telethon.types import InputPeerChannel
 from telethon.tl.functions import stats, messages
 from telethon.tl.functions.channels import GetChannelsRequest
 import datetime
+import os
 import json
 import pandas as pd
 from tqdm import tqdm
 
 tqdm.pandas()
 
-API_ID = 24910635
-API_HASH = '5583342def2592fe9e6cf13661d2da8f'
+TELEGRAM_API_ID = os.getenv('TELEGRAM_API_ID')
+TELEGRAM_API_HASH = os.getenv('TELEGRAM_API_HASH')
 
 def clean_chat_name(chat):
     link_components = chat.split('/')
@@ -33,7 +34,7 @@ def get_link(chat, client):
         id = None
     return id
 
-with TelegramClient('SessionName', API_ID, API_HASH) as client:
+with TelegramClient('SessionName', TELEGRAM_API_ID, TELEGRAM_API_HASH) as client:
     df = pd.read_csv('./data/telegram/old_stuff_to_keep/telegram_links.csv')
     df['cleaned_link'] = df.LINKS.progress_apply(lambda x: clean_chat_name(x))
     df['chat_name'] = df.LINKS.progress_apply(lambda x: get_chat_name(x))

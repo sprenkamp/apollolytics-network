@@ -5,9 +5,10 @@ from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.messages import GetHistoryRequest
 import numpy as np
 import pandas as pd
+import os
 
-TELEGRAM_API_ID = 24910635
-TELEGRAM_API_HASH = '5583342def2592fe9e6cf13661d2da8f'
+TELEGRAM_API_ID = os.getenv('TELEGRAM_API_ID')
+TELEGRAM_API_HASH = os.getenv('TELEGRAM_API_HASH')
 
 with TelegramClient('SessionName', TELEGRAM_API_ID, TELEGRAM_API_HASH) as client:
     df = pd.read_csv("../../data/telegram/old_stuff_to_keep/messages_scraped.csv")

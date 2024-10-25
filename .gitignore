@@ -3,6 +3,7 @@ data/
 env.
 SessionName.session*
 !data/telegram/first.csv
+!data/telegram/international_telegram_groups.txt
 .DS_Store
 visualization/
 visuals/
