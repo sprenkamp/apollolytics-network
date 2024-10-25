@@ -1,5 +1,5 @@
 #added by collaboarators
-data/
+data/telegram/*
 env.
 SessionName.session*
 !data/telegram/first.csv
