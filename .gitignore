@@ -7,6 +7,10 @@ SessionName.session*
 .DS_Store
 visualization/
 visuals/
+topics_over_time/
+liudmila/
+actor_perspective/
+guillaume_experiments/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
