@@ -7,6 +7,7 @@ SessionName.session*
 .DS_Store
 visualization/
 visuals/
+models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
