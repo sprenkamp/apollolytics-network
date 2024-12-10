@@ -155,8 +155,8 @@ async def callAPI(input_file_path, output_csv_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Telegram Chat Scraper')
-    parser.add_argument('--input_file', type=str, help='Path to the input file containing the list of chats to scrape')
-    parser.add_argument('--output_file', type=str, help='Path to the output CSV file where the scraped data will be saved')
+    parser.add_argument('-i', '--input_file', type=str, help='Path to the input file containing the list of chats to scrape')
+    parser.add_argument('-o', '--output_file', type=str, help='Path to the output CSV file where the scraped data will be saved')
     args = parser.parse_args()
 
     asyncio.run(callAPI(args.input_file, args.output_file))

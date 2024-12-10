@@ -6,13 +6,13 @@ from tqdm import tqdm
 from typing import List
 from langchain.embeddings import OpenAIEmbeddings
 
-class EventEmbeddingSystem:
+class EmbeddingSystem:
     """
     A system to generate embeddings for text data using the OpenAI Embeddings API.
     """
     def __init__(
         self,
-        embedding_model_name: str = "text-embedding-3-large",
+        embedding_model_name: str = "text-embedding-3-small",
     ):
         """
         Initializes the EventEmbeddingSystem with necessary components.
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     MAX_WORKERS = 10
     # Initialize the embedding system
-    embedding_system = EventEmbeddingSystem()
+    embedding_system = EmbeddingSystem()
 
     # Read the CSV file
     df = pd.read_csv(args.input)
