@@ -9,6 +9,8 @@ SessionName.session*
 visualization/
 visuals/
 models/
+actor_perspective/
+guillaume_experiments/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
