@@ -44,12 +44,12 @@ async def ensure_column_exists(connection, column_name):
     column_check_query = f"""
     SELECT column_name
     FROM information_schema.columns
-    WHERE table_name = 'messages' AND LOWER(column_name) = LOWER('{column_name}')
+    WHERE table_name = 'messages_community' AND LOWER(column_name) = LOWER('{column_name}')
     """
     result = await connection.fetch(column_check_query)
     if not result:
         # Only attempt to add the column if it does not exist
-        await connection.execute(f'ALTER TABLE messages ADD COLUMN "{column_name}" JSONB DEFAULT NULL;')
+        await connection.execute(f'ALTER TABLE messages_community ADD COLUMN "{column_name}" JSONB DEFAULT NULL;')
         logging.info(f"Added column: {column_name}")
     else:
         logging.info(f"Column {column_name} already exists.")
@@ -81,7 +81,7 @@ async def add_embeddings():
             # Fetch messages outside of a transaction
             rows = await connection.fetch(f"""
                 SELECT chat_id, id, messageText
-                FROM messages
+                FROM messages_community
                 WHERE "{column_name}" IS NULL AND messageText IS NOT NULL
             """)
 
@@ -116,7 +116,7 @@ async def add_embeddings():
                                     # Update the database
                                     await connection.execute(
                                         f"""
-                                        UPDATE messages
+                                        UPDATE messages_community
                                         SET "{column_name}" = $1::jsonb
                                         WHERE chat_id = $2 AND id = $3
                                         """,

@@ -22,6 +22,7 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 EMBEDDING_MODEL_NAME = "deepvk/USER-bge-m3"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 MODEL = SentenceTransformer(EMBEDDING_MODEL_NAME, device=DEVICE)
+TYPE = 'community'
 
 def get_embedding(text):
     return MODEL.encode(text).tolist()
@@ -29,7 +30,7 @@ def get_embedding(text):
 async def count_total_rows(db_pool, column_name):
     count_query = f"""
         SELECT COUNT(*) AS total
-        FROM messages
+        FROM messages_{TYPE}
         WHERE {column_name} IS NOT NULL
     """
     async with db_pool.acquire() as connection:
@@ -46,7 +47,7 @@ async def fetch_embeddings(db_pool, column_name, fetch_columns, batch_size=1000)
     while True:
         query = f"""
             SELECT {", ".join(fetch_columns)}
-            FROM messages
+            FROM messages_{TYPE}
             WHERE {column_name} IS NOT NULL
             ORDER BY id
             LIMIT {batch_size} OFFSET {offset}
@@ -147,7 +148,7 @@ async def main():
         print(f"Error decoding JSON from {DESCRIPTIONS_FILE}: {e}")
         return
 
-    OUTPUT_CSV = "similar_messages_BGE.csv"
+    OUTPUT_CSV = f"similar_messages_{TYPE}_BGE.csv"
     THRESHOLD = 0.0
 
     selected_read_columns = ["id", "messagetext", "chat_id", "chat_name", 'messagedatetime', f"embedding_{EMBEDDING_MODEL_NAME.split('/')[-1].replace('-', '_').lower()}"]
