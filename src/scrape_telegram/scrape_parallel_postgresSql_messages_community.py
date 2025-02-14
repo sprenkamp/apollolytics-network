@@ -45,7 +45,7 @@ if not TELEGRAM_API_ID or not TELEGRAM_API_HASH:
 CREATE_TABLE_QUERY = """
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE IF NOT EXISTS messages_community (
+CREATE TABLE IF NOT EXISTS messages_community_debug (
     chat_id BIGINT NOT NULL,
     id BIGINT NOT NULL,
     chat_name TEXT,
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS messages_community (
 
 # Adjust the INSERT_MESSAGE_QUERY to exclude restriction_reason and use composite primary key
 INSERT_MESSAGE_QUERY = """
-INSERT INTO messages_community (
+INSERT INTO messages_community_debug (
     chat_id, id, chat_name, peer_id, messageDatetime, messageDate, messageText, "out", mentioned,
     media_unread, silent, post, from_scheduled, legacy, edit_hide, pinned, noforwards,
     invert_media, offline, from_id, from_boosts_applied, saved_peer_id, fwd_from,
@@ -110,7 +110,7 @@ INSERT INTO messages_community (
 ON CONFLICT (chat_id, id) DO NOTHING
 """
 
-BATCH_SIZE = 25000  # Number of messages per batch insert
+BATCH_SIZE = 10000  # Number of messages per batch insert
 
 async def process_message(message, chat_name):
     """
@@ -123,17 +123,16 @@ async def process_message(message, chat_name):
         or message.message == 'Невозможно подключиться к серверу. Проверьте соединение и повторите попытку.'
     ):
         return None
-
+    print(message)
     # Extract and process fields
-    chat_id = None
-    if isinstance(message.peer_id, types.PeerChannel):
-        chat_id = message.peer_id.channel_id
-    elif isinstance(message.peer_id, types.PeerUser):
-        chat_id = message.peer_id.user_id
+    chat_id = message.peer_id.channel_id
+    peer_id = None
+    if isinstance(message.from_id, types.PeerUser):
+        peer_id = message.from_id.user_id
+    elif isinstance(message.from_id, types.PeerChannel):
+        peer_id = message.from_id.channel_id
 
     message_id = message.id
-    peer_id = chat_id  # Assuming peer_id is similar to chat_id
-
     message_datetime = message.date.replace(tzinfo=None)
     message_date = message.date.date()
     message_text = message.message
@@ -354,11 +353,11 @@ async def callAPI(input_file_path):
         logging.error(f"Failed to create PostgreSQL connection pool: {e}")
         return
 
-    # Create the messages_community table
+    # Create the messages_community_debug table
     try:
         async with db_pool.acquire() as connection:
             await connection.execute(CREATE_TABLE_QUERY)
-            logging.info("Ensured that the 'messages_community' table exists.")
+            logging.info("Ensured that the 'messages_community_debug' table exists.")
     except Exception as e:
         logging.error(f"Failed to create table: {e}")
         await db_pool.close()
@@ -381,7 +380,7 @@ async def callAPI(input_file_path):
                 try:
                     async with db_pool.acquire() as connection:
                         result = await connection.fetchrow(
-                            "SELECT MAX(messageDatetime) FROM messages_community WHERE chat_id = $1", chat_id
+                            "SELECT MAX(messageDatetime) FROM messages_community_debug WHERE chat_id = $1", chat_id
                         )
                     # Set highest_date to result['max'] or default to January 1, 2021
                     highest_date = result['max'] if result and result['max'] else datetime.datetime(2021, 1, 1)

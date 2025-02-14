@@ -20,7 +20,8 @@ POSTGRES_USER = os.getenv("POSTGRES_USER", "your_username")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 
 EMBEDDING_MODEL_NAME = "deepvk/USER-bge-m3"
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "mps" if torch.mps.is_available() else "cpu"
+print(f"Using device: {DEVICE}")
 MODEL = SentenceTransformer(EMBEDDING_MODEL_NAME, device=DEVICE)
 TYPE = 'community'
 
@@ -62,7 +63,7 @@ async def fetch_embeddings(db_pool, column_name, fetch_columns, batch_size=1000)
         batch_num += 1
 
 async def process_descriptions(descriptions, output_csv, selected_read_columns, selected_write_columns, threshold=0.8, batch_size=1000):
-    column_name = f"embedding_{EMBEDDING_MODEL_NAME.split('/')[-1].replace('-', '_').lower()}"
+    column_name = f"embedding_{EMBEDDING_MODEL_NAME.split('/')[-1].replace('-', '_').lower()}_32_bits"
     db_pool = await asyncpg.create_pool(
         host=POSTGRES_HOST,
         port=POSTGRES_PORT,
@@ -151,7 +152,7 @@ async def main():
     OUTPUT_CSV = f"similar_messages_{TYPE}_BGE.csv"
     THRESHOLD = 0.0
 
-    selected_read_columns = ["id", "messagetext", "chat_id", "chat_name", 'messagedatetime', f"embedding_{EMBEDDING_MODEL_NAME.split('/')[-1].replace('-', '_').lower()}"]
+    selected_read_columns = ["id", "messagetext", "chat_id", "chat_name", 'messagedatetime', f"embedding_{EMBEDDING_MODEL_NAME.split('/')[-1].replace('-', '_').lower()}_32_bits"]
     selected_write_columns = ["id", "messagetext", "chat_id", "chat_name", 'messagedatetime']
 
     await process_descriptions(descriptions, OUTPUT_CSV, selected_read_columns, selected_write_columns, THRESHOLD, batch_size=200000)
