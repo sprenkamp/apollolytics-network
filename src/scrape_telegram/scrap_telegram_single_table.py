@@ -5,7 +5,6 @@ import datetime
 import time
 import json
 import logging
-from pathlib import Path
 
 from dotenv import load_dotenv
 from telethon import TelegramClient, types
@@ -31,7 +30,7 @@ load_dotenv()
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "telegram_scraper")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")  # Changed from UZH to your system username
+POSTGRES_USER = os.getenv("POSTGRES_USER", "kiliansprenkamp")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")  # Empty if not set
 
 # Telegram API credentials from environment variables
@@ -42,86 +41,77 @@ if not TELEGRAM_API_ID or not TELEGRAM_API_HASH:
     logging.error("Please set TELEGRAM_API_ID and TELEGRAM_API_HASH in your environment variables.")
     exit(1)
 
-# Define table names for different categories
-TABLE_NAMES = {
-    'ru_channels': 'russian_channels_messages',
-    'ru_groups': 'russian_groups_messages',
-    'ua_channels': 'ukrainian_channels_messages',
-    'ua_groups': 'ukrainian_groups_messages'
-}
-
 # Define the PostgreSQL database schema with composite primary key (chat_id, id)
-def get_create_table_query(table_name):
-    return f"""
-    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE_TABLE_QUERY = """
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-    CREATE TABLE IF NOT EXISTS {table_name} (
-        chat_id BIGINT NOT NULL,
-        id BIGINT NOT NULL,
-        chat_name TEXT,
-        peer_id BIGINT,
-        messageDatetime TIMESTAMP,
-        messageDate DATE,
-        messageText TEXT,
-        "out" BOOLEAN,
-        mentioned BOOLEAN,
-        media_unread BOOLEAN,
-        silent BOOLEAN,
-        post BOOLEAN,
-        from_scheduled BOOLEAN,
-        legacy BOOLEAN,
-        edit_hide BOOLEAN,
-        pinned BOOLEAN,
-        noforwards BOOLEAN,
-        invert_media BOOLEAN,
-        offline BOOLEAN,
-        from_id BIGINT,
-        from_boosts_applied INTEGER,
-        saved_peer_id BIGINT,
-        fwd_from BIGINT,
-        fwd_from_type TEXT,
-        via_bot_id BIGINT,
-        via_business_bot_id BIGINT,
-        reply_to BIGINT,
-        reply_markup TEXT,
-        entities TEXT,
-        edit_date TIMESTAMP,
-        post_author TEXT,
-        grouped_id BIGINT,
-        ttl_period INTEGER,
-        quick_reply_shortcut_id BIGINT,
-        effect TEXT,
-        factcheck TEXT,
-        views INTEGER,
-        forwards INTEGER,
-        replies INTEGER,
-        reactions JSONB,
-        embedding TEXT,
-        PRIMARY KEY (chat_id, id)
-    );
-    """
+CREATE TABLE IF NOT EXISTS messages (
+    chat_id BIGINT NOT NULL,
+    id BIGINT NOT NULL,
+    chat_name TEXT,
+    peer_id BIGINT,
+    messageDatetime TIMESTAMP,
+    messageDate DATE,
+    messageText TEXT,
+    "out" BOOLEAN,
+    mentioned BOOLEAN,
+    media_unread BOOLEAN,
+    silent BOOLEAN,
+    post BOOLEAN,
+    from_scheduled BOOLEAN,
+    legacy BOOLEAN,
+    edit_hide BOOLEAN,
+    pinned BOOLEAN,
+    noforwards BOOLEAN,
+    invert_media BOOLEAN,
+    offline BOOLEAN,
+    from_id BIGINT,
+    from_boosts_applied INTEGER,
+    saved_peer_id BIGINT,
+    fwd_from BIGINT,
+    fwd_from_type TEXT,
+    via_bot_id BIGINT,
+    via_business_bot_id BIGINT,
+    reply_to BIGINT,
+    reply_markup TEXT,
+    entities TEXT,
+    edit_date TIMESTAMP,
+    post_author TEXT,
+    grouped_id BIGINT,
+    ttl_period INTEGER,
+    quick_reply_shortcut_id BIGINT,
+    effect TEXT,
+    factcheck TEXT,
+    views INTEGER,
+    forwards INTEGER,
+    replies INTEGER,
+    reactions JSONB,
+    embedding TEXT,
+    PRIMARY KEY (chat_id, id)
+);
+"""
 
-def get_insert_query(table_name):
-    return f"""
-    INSERT INTO {table_name} (
-        chat_id, id, chat_name, peer_id, messageDatetime, messageDate, messageText, "out", mentioned,
-        media_unread, silent, post, from_scheduled, legacy, edit_hide, pinned, noforwards,
-        invert_media, offline, from_id, from_boosts_applied, saved_peer_id, fwd_from,
-        fwd_from_type, via_bot_id, via_business_bot_id, reply_to, reply_markup, entities,
-        edit_date, post_author, grouped_id, ttl_period,
-        quick_reply_shortcut_id, effect, factcheck, views, forwards, replies, reactions, embedding
-    ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9,
-        $10, $11, $12, $13, $14, $15, $16, $17,
-        $18, $19, $20, $21, $22, $23,
-        $24, $25, $26, $27, $28, $29,
-        $30, $31, $32, $33,
-        $34, $35, $36, $37, $38, $39, $40, $41
-    )
-    ON CONFLICT (chat_id, id) DO NOTHING
-    """
+# Adjust the INSERT_MESSAGE_QUERY to exclude restriction_reason and use composite primary key
+INSERT_MESSAGE_QUERY = """
+INSERT INTO messages (
+    chat_id, id, chat_name, peer_id, messageDatetime, messageDate, messageText, "out", mentioned,
+    media_unread, silent, post, from_scheduled, legacy, edit_hide, pinned, noforwards,
+    invert_media, offline, from_id, from_boosts_applied, saved_peer_id, fwd_from,
+    fwd_from_type, via_bot_id, via_business_bot_id, reply_to, reply_markup, entities,
+    edit_date, post_author, grouped_id, ttl_period,
+    quick_reply_shortcut_id, effect, factcheck, views, forwards, replies, reactions, embedding
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9,
+    $10, $11, $12, $13, $14, $15, $16, $17,
+    $18, $19, $20, $21, $22, $23,
+    $24, $25, $26, $27, $28, $29,
+    $30, $31, $32, $33,
+    $34, $35, $36, $37, $38, $39, $40, $41
+)
+ON CONFLICT (chat_id, id) DO NOTHING
+"""
 
-BATCH_SIZE = 10000  # Number of messages per batch insert
+BATCH_SIZE = 25000  # Number of messages per batch insert
 
 async def process_message(message, chat_name):
     """
@@ -262,34 +252,33 @@ async def process_message(message, chat_name):
 
     return record
 
-async def insert_batches(queue, db_pool, table_name):
+async def insert_batches(queue, db_pool):
     """
     Consumer coroutine that inserts message records into the PostgreSQL database in batches.
     """
     batch = []
-    insert_query = get_insert_query(table_name)
     while True:
         record = await queue.get()
         if record is None:
             # Sentinel received, insert any remaining records and exit
             if batch:
                 try:
-                    await db_pool.executemany(insert_query, batch)
-                    logging.info(f"Inserted final batch of {len(batch)} records into {table_name}.")
+                    await db_pool.executemany(INSERT_MESSAGE_QUERY, batch)
+                    logging.info(f"Inserted final batch of {len(batch)} records.")
                 except Exception as e:
-                    logging.error(f"Error inserting final batch into {table_name}: {e}")
+                    logging.error(f"Error inserting final batch: {e}")
             break
         batch.append(record)
         if len(batch) >= BATCH_SIZE:
             try:
-                await db_pool.executemany(insert_query, batch)
-                logging.info(f"Inserted batch of {len(batch)} records into {table_name}.")
+                await db_pool.executemany(INSERT_MESSAGE_QUERY, batch)
+                logging.info(f"Inserted batch of {len(batch)} records.")
             except Exception as e:
-                logging.error(f"Error inserting batch into {table_name}: {e}")
+                logging.error(f"Error inserting batch: {e}")
             batch.clear()
-    logging.info(f"Batch insertion coroutine for {table_name} has finished.")
+    logging.info("Batch insertion coroutine has finished.")
 
-async def scrape_chat(chat_name, client, highest_date, db_pool, queue, max_concurrent_tasks=4):
+async def scrape_chat(chat_name, client, highest_date, db_pool, queue, max_concurrent_tasks=10):
     """
     Asynchronously scrape messages from a single chat with parallel message processing and a tqdm progress bar.
     """
@@ -396,18 +385,18 @@ async def callAPI(input_file_path):
                         result = await connection.fetchrow(
                             "SELECT MAX(messageDatetime) FROM messages WHERE chat_id = $1", chat_id
                         )
-                    # Set highest_date to result['max'] or default to January 1, 2022
-                    highest_date = result['max'] if result and result['max'] else datetime.datetime(2022, 1, 1)
+                    # Set highest_date to result['max'] or default to January 1, 2021
+                    highest_date = result['max'] if result and result['max'] else datetime.datetime(2021, 1, 1)
                 except Exception as e:
                     logging.error(f"Error fetching highest_date for chat {chat_name}: {e}")
                     # If there's an error fetching the date, default to January 1, 2021
-                    highest_date = datetime.datetime(2022, 1, 1)
+                    highest_date = datetime.datetime(2021, 1, 1)
 
                 # Create a queue for batch insertion
                 queue = asyncio.Queue()
 
                 # Start the batch insertion consumer coroutine
-                insert_task = asyncio.create_task(insert_batches(queue, db_pool, TABLE_NAMES[chat_name]))
+                insert_task = asyncio.create_task(insert_batches(queue, db_pool))
 
                 # Scrape the chat and enqueue messages
                 await scrape_chat(chat_name, client, highest_date, db_pool, queue)
@@ -426,101 +415,14 @@ async def callAPI(input_file_path):
 
     logging.info("Finished scraping all chats.")
 
-async def setup_database():
-    """Create all necessary tables in the database"""
-    conn = await asyncpg.connect(
-        host=POSTGRES_HOST,
-        port=POSTGRES_PORT,
-        database=POSTGRES_DB,
-        user=POSTGRES_USER,
-        password=POSTGRES_PASSWORD
-    )
-    
-    try:
-        for table_name in TABLE_NAMES.values():
-            await conn.execute(get_create_table_query(table_name))
-            logging.info(f"Created table {table_name}")
-    finally:
-        await conn.close()
-
-async def process_file(file_path, table_name, client, db_pool, max_concurrent_chats=5):
-    with open(file_path, 'r') as f:
-        chat_names = [line.strip() for line in f if line.strip()]
-
-    semaphore = asyncio.Semaphore(max_concurrent_chats)
-    tasks = []
-
-    async def scrape_one_chat(chat_name):
-        async with semaphore:
-            try:
-                entity = await client.get_entity(chat_name)
-                if entity:
-                    chat_id = entity.id
-                    # Retrieve the highest message date for the chat from the database
-                    try:
-                        async with db_pool.acquire() as connection:
-                            result = await connection.fetchrow(
-                                "SELECT MAX(messageDatetime) FROM {} WHERE chat_id = $1".format(table_name), chat_id
-                            )
-                        highest_date = result['max'] if result and result['max'] else datetime.datetime(2021, 1, 1)
-                    except Exception as e:
-                        logging.error(f"Error fetching highest_date for chat {chat_name}: {e}")
-                        highest_date = datetime.datetime(2021, 1, 1)
-                    logging.info(f"Starting to scrape chat: {chat_name} from {highest_date}")
-                    queue = asyncio.Queue()
-                    inserter = asyncio.create_task(insert_batches(queue, db_pool, table_name))
-                    await scrape_chat(chat_name, client, highest_date, db_pool, queue, max_concurrent_tasks=5)
-                    await queue.put(None)
-                    await inserter
-                else:
-                    logging.warning(f"Chat not found: {chat_name}")
-            except Exception as e:
-                logging.error(f"Error checking chat {chat_name}: {e}")
-
-    for chat_name in chat_names:
-        tasks.append(asyncio.create_task(scrape_one_chat(chat_name)))
-
-    await asyncio.gather(*tasks)
-
-async def main():
-    # Setup database tables
-    await setup_database()
-    
-    # Create database connection pool
-    db_pool = await asyncpg.create_pool(
-        host=POSTGRES_HOST,
-        port=POSTGRES_PORT,
-        database=POSTGRES_DB,
-        user=POSTGRES_USER,
-        password=POSTGRES_PASSWORD
-    )
-    
-    # Initialize Telegram client
-    client = TelegramClient('session_name', TELEGRAM_API_ID, TELEGRAM_API_HASH)
-    await client.start()
-    
-    try:
-        # Process each file sequentially
-        input_dir = Path("data/telegram/tgstat/sorted")
-        for file_path in input_dir.glob("*.txt"):
-            # Determine table name based on filename
-            if "ru_channels" in file_path.name:
-                table_name = TABLE_NAMES['ru_channels']
-            elif "ru_groups" in file_path.name:
-                table_name = TABLE_NAMES['ru_groups']
-            elif "ua_channels" in file_path.name:
-                table_name = TABLE_NAMES['ua_channels']
-            elif "ua_groups" in file_path.name:
-                table_name = TABLE_NAMES['ua_groups']
-            else:
-                continue
-            
-            logging.info(f"Processing {file_path} into table {table_name}")
-            await process_file(file_path, table_name, client, db_pool, max_concurrent_chats=5)
-    
-    finally:
-        await db_pool.close()
-        await client.disconnect()
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description='Telegram Chat Scraper')
+    parser.add_argument('-i', '--input_file', type=str, required=True,
+                        help='Path to the input file containing the list of chats to scrape')
+    args = parser.parse_args()
+
+    # Run the asynchronous callAPI function
+    try:
+        asyncio.run(callAPI(args.input_file))
+    except KeyboardInterrupt:
+        logging.warning("Script interrupted by user.")
