@@ -13,6 +13,7 @@ models/
 actor_perspective/
 guillaume_experiments/
 .DS_Store
+analysis_output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
