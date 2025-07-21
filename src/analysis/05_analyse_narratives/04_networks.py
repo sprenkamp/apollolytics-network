@@ -92,7 +92,7 @@ def create_message_sharing_network(df, country_filter=None, output_file=None):
     """Create network visualization for actual message sharing/forwarding"""
     if country_filter:
         print(f"Creating message sharing network for {country_filter}...")
-        # Filter data for the specific country
+    # Filter data for the specific country
         filtered_df = df[df['country'] == country_filter].copy()
         if filtered_df.empty:
             print(f"No data found for {country_filter}")
@@ -215,18 +215,18 @@ def create_message_sharing_network(df, country_filter=None, output_file=None):
             # Find the chat_id for this chat name
             chat_id = None
             for cid, chat_name in chat_id_to_name.items():
-                if chat_name == chat:
+                    if chat_name == chat:
                     chat_id = cid
-                    break
-            
+                        break
+                
             if chat_id and chat_id in chat_id_to_type:
                 chat_type = chat_id_to_type[chat_id]
-                if chat_type == 'channel':
-                    node_color = node_colors['channel']
-                    node_type = "Channel"
-                elif chat_type == 'group':
-                    node_color = node_colors['group']
-                    node_type = "Group"
+                    if chat_type == 'channel':
+                        node_color = node_colors['channel']
+                        node_type = "Channel"
+                    elif chat_type == 'group':
+                        node_color = node_colors['group']
+                        node_type = "Group"
                 else:
                     node_color = node_colors['group']  # Default to group
                     node_type = "Group"
@@ -264,27 +264,27 @@ def create_message_sharing_network(df, country_filter=None, output_file=None):
 
         
         # Always create edge for forwarded message, regardless of narrative
-        message_id = row.get('id', 'unknown')
-        message_text = row.get('messagetext', '')[:100] + '...' if len(str(row.get('messagetext', ''))) > 100 else str(row.get('messagetext', ''))
-        period = str(row['period'])
-        
-        # Determine source and target types using the type column
-        if source_chat.startswith("Unknown_Source_"):
-            source_type = 'unknown'
-        else:
+            message_id = row.get('id', 'unknown')
+            message_text = row.get('messagetext', '')[:100] + '...' if len(str(row.get('messagetext', ''))) > 100 else str(row.get('messagetext', ''))
+            period = str(row['period'])
+            
+            # Determine source and target types using the type column
+            if source_chat.startswith("Unknown_Source_"):
+                source_type = 'unknown'
+            else:
             if source_chat_id in chat_id_to_type:
                 source_type = chat_id_to_type[source_chat_id]
+                else:
+                    source_type = 'group'  # Default to group
+                
+            if target_chat.startswith("Unknown_Target_"):
+                target_type = 'unknown'
             else:
-                source_type = 'group'  # Default to group
-            
-        if target_chat.startswith("Unknown_Target_"):
-            target_type = 'unknown'
-        else:
             if target_chat_id in chat_id_to_type:
                 target_type = chat_id_to_type[target_chat_id]
-            else:
-                target_type = 'group'  # Default to group
-        
+                else:
+                    target_type = 'group'  # Default to group
+            
         # Use dominant narrative for coloring, or default to gray if none found
         if dominant_narrative and max_similarity > SIMILARITY_THRESHOLD:
             edge_color = narrative_colors.get(dominant_narrative, '#C0C0C0')
@@ -295,17 +295,17 @@ def create_message_sharing_network(df, country_filter=None, output_file=None):
             narrative_label = 'No dominant narrative'
             without_narrative_above_threshold += 1
         
-        edges_data.append({
-            'source': source_chat,
-            'target': target_chat,
+            edges_data.append({
+                'source': source_chat,
+                'target': target_chat,
             'narrative': narrative_label,
-            'period': period,
-            'message_id': message_id,
-            'message_text': message_text,
+                'period': period,
+                'message_id': message_id,
+                'message_text': message_text,
             'color': edge_color,
-            'source_type': source_type,
-            'target_type': target_type
-        })
+                'source_type': source_type,
+                'target_type': target_type
+            })
     
     # Debug output
     print(f"  Total forwarded messages: {total_forwarded}")
@@ -400,9 +400,9 @@ def create_message_sharing_network(df, country_filter=None, output_file=None):
     html = html.replace('</body>', legend_html + '</body>')
     
     if output_file:
-        with open(output_file, 'w') as f:
-            f.write(html)
-        print(f"Message sharing network saved to {output_file}")
+    with open(output_file, 'w') as f:
+        f.write(html)
+    print(f"Message sharing network saved to {output_file}")
     else:
         print("Network created but no output file specified")
     
